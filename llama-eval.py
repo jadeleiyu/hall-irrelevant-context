@@ -77,7 +77,7 @@ def main_with_context(args):
 
     nq_dev_df = pd.read_csv(
         join(args.data_dir, 'nq-dev-with-ctx.csv'),
-        converters={"answer": literal_eval}
+        converters={"answer": literal_eval, 'retrieved contexts': literal_eval}
     )
     nq_dev_df_factual = nq_dev_df.loc[
         nq_dev_df[f'is {model_name} correct without context?'] == 1
