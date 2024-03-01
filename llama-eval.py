@@ -50,17 +50,17 @@ def main_no_context(args):
         answers_no_ctx.append(answer_tokens)
         torch.cuda.empty_cache()
     
-    nq_dev_df[f'{model_name} answer without context'] = answers_no_ctx
+    nq_dev_df[f'{args.model_name} answer without context'] = answers_no_ctx
     
     is_correct_answer = []
     for i, row in nq_dev_df.iterrows():
         is_correct_i = 0
-        model_answer = row[f'{model_name} answer without context']
+        model_answer = row[f'{args.model_name} answer without context']
         for true_answer in row['answer']:
             if true_answer in model_answer:
                 is_correct_i = 1
         is_correct_answer.append(is_correct_i)        
-    nq_dev_df[f'is {model_name} correct without context?'] = is_correct_answer
+    nq_dev_df[f'is {args.model_name} correct without context?'] = is_correct_answer
 
     nq_dev_df.to_csv(join(args.data_dir, 'nq-dev-with-ctx.csv'), index=False)
 
@@ -77,10 +77,10 @@ def main_with_context(args):
 
     nq_dev_df = pd.read_csv(
         join(args.data_dir, 'nq-dev-with-ctx.csv'),
-        converters={"answer": literal_eval, 'retrieved contexts': literal_eval}
+        converters={"answer": literal_eval, "retrieved contexts": literal_eval}        
     )
     nq_dev_df_factual = nq_dev_df.loc[
-        nq_dev_df[f'is {model_name} correct without context?'] == 1
+        nq_dev_df[f'is {args.model_name} correct without context?'] == 1
     ].reset_index(drop=True)
 
     answers = []
@@ -98,14 +98,15 @@ def main_with_context(args):
                 answer_tokens = tokenizer.batch_decode(outputs[:, input_ids.shape[1]:], skip_special_tokens=True)[0]
             is_correct = 0
             for true_answer in row['answer']:
-                if true_answer in model_answer:
+                if true_answer in answer_tokens:
                     is_correct = 1
             row_is_correct_with_ctx.append(is_correct)
             row_answers.append(answer_tokens)
+        is_correct_with_ctx.append(row_is_correct_with_ctx)
         answers.append(row_answers)
 
-    nq_dev_df_factual[f'{model_name} answers with context'] = answers
-    nq_dev_df_factual[f'is {model_name} correct with context?'] = is_correct_with_ctx
+    nq_dev_df_factual[f'{args.model_name} answers with context'] = answers
+    nq_dev_df_factual[f'is {args.model_name} correct with context?'] = is_correct_with_ctx
     nq_dev_df_factual.to_csv(join(args.data_dir, 'nq-dev-with-ctx-answers.csv'), index=False)
     
 
